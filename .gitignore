@@ -1,0 +1,18 @@
+# 秘密
+.env
+.env.*
+!.env.example
+secrets/
+# 作ったもの（キットの外の kit-work に置くのが基本）
+*.mp4
+*.wav
+*.mp3
+*.mov
+logs/
+reports/
+*.bak-*
+# パソコンが勝手に作るもの
+__pycache__/
+.DS_Store
+Thumbs.db
+.claude/settings.local.json

@@ -1,0 +1,22 @@
+{
+  "article": "/絶対パス/記事.md",
+  "article_title": "記事のタイトル",
+  "fact_check": [
+    "台本に入れた数字・固有名詞と、記事のどこに書いてあるか（ご本人に確かめてもらう一覧）"
+  ],
+  "scripts": [
+    {
+      "id": "short01",
+      "title": "画面上部の見出し（15文字以内）",
+      "scenes": [
+        {"role": "hook",   "slide": "大きな文字\n8文字×2行まで", "narration": "最初の2秒で言い切る一言（16文字以内）"},
+        {"role": "point1", "slide": "ポイント1",                  "narration": "読み上げる文。数字は、ひらがなで（さんかげつ）。", "caption": "字幕に出す文。数字は漢字や算用数字で（3か月）。"},
+        {"role": "point2", "slide": "ポイント2",                  "narration": "…"},
+        {"role": "point3", "slide": "ポイント3",                  "narration": "…"},
+        {"role": "cta",    "slide": "次の一歩",                   "narration": "見た人にしてほしい行動を1つだけ。"}
+      ]
+    },
+    {"id": "short02", "title": "…", "scenes": []},
+    {"id": "short03", "title": "…", "scenes": []}
+  ]
+}

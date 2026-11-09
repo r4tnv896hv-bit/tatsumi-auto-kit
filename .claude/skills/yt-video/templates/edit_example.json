@@ -1,0 +1,16 @@
+{
+  "output": "out/final.mp4",
+  "size": "1920x1080",
+  "fps": 30,
+  "crf": 21,
+  "fade_video": false,
+  "clips": [
+    { "src": "raw/talk.mp4",  "in": 0.00, "out": 2.62, "caption": "ここが冒頭の一言です" },
+    { "src": "raw/broll.mp4", "in": 1.00, "out": 3.50, "caption": "音のない素材も、無音を足してつなぎます" },
+    { "src": "raw/talk.mp4",  "in": 3.88, "out": 6.62, "caption": "" },
+    { "src": "raw/talk.mp4",  "in": 7.88, "out": 10.62, "caption": "" }
+  ],
+  "srt": null,
+  "bgm": { "src": "bgm/bgm.mp3", "volume": 0.12, "fade_out": 2, "loudnorm": true },
+  "font": null
+}

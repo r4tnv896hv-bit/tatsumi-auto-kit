@@ -1,0 +1,8 @@
+# 毎週日曜 20:00 に週報を作る例（Mac / Linux の crontab）
+# 1 ターミナルで  crontab -e  を開き、下の1行を【】を埋めて貼る（絶対パスで）
+# 2 保存して閉じる。確かめるときは  crontab -l
+# 注意: パソコンが閉じている・スリープ中は動きません。ファイルを作るだけで、どこにも送りません。
+
+0 20 * * 0 /usr/bin/python3 【/Users/あなたの名前/tatsumi-auto-kit】/.claude/skills/weekly-report/scripts/weekly_report.py --work 【/Users/あなたの名前/kit-work】 >> 【/Users/あなたの名前/kit-work】/logs/weekly.log 2>&1
+
+# Windows はタスク スケジューラで、操作に「python」、引数に上の weekly_report.py 以降を絶対パスで入れる
