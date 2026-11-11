@@ -44,7 +44,7 @@ BADGE = {"hook": "", "point1": "POINT 1", "point2": "POINT 2", "point3": "POINT 
 
 # ---------------------------------------------------------------- 読み上げ
 def tts_say(text, wav, voice, rate):
-    """内蔵の声で読む。Mac は say、Linux は Open JTalk（どちらも無料・回数制限なし）。"""
+    """内蔵の声で読む。Mac は say、Windows は標準の音声合成、Linux は Open JTalk（どれも無料・回数制限なし）。"""
     vu.local_tts(text, wav, voice, rate, 48000)
 
 
@@ -143,8 +143,8 @@ def main():
     ap.add_argument("scripts")
     ap.add_argument("--index", type=int, default=1, help="何本目を作るか（1〜3）")
     ap.add_argument("--tts", default="auto", choices=["auto", "say", "gemini"])
-    ap.add_argument("--voice", default=None, help="say なら Kyoko、Gemini なら Puck など（Linux の内蔵の声では使わない）")
-    ap.add_argument("--rate", type=int, default=0, help="内蔵の声の速さ（初期値のままが自然。Mac: 1分の語数 / Linux: 百分率で 100 が標準）")
+    ap.add_argument("--voice", default=None, help="say なら Kyoko、Gemini なら Puck など（Windows・Linux の内蔵の声では使わない）")
+    ap.add_argument("--rate", type=int, default=0, help="内蔵の声の速さ（初期値のままが自然。Mac: 1分の語数 / Windows: -10〜10 / Linux: 百分率で 100 が標準）")
     ap.add_argument("--outdir", default=None)
     a = ap.parse_args()
 
@@ -161,7 +161,7 @@ def main():
     if engine == "auto":
         engine = "gemini" if os.environ.get("GEMINI_API_KEY") else "say"
     if engine == "gemini" and not os.environ.get("GEMINI_API_KEY"):
-        sys.exit("GEMINI_API_KEY が読めません。zsh -ic 'python3 …' で動かすか、--tts say を使ってください。")
+        sys.exit("GEMINI_API_KEY が読めません。Mac は zsh -ic 'python3 …' で動かすか、--tts say（内蔵の声）を使ってください。")
 
     wavs = [os.path.join(work, "n%d.wav" % i) for i in range(len(scenes))]
     if engine == "gemini":

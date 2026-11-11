@@ -247,8 +247,10 @@ def render(spec_path):
             srt = resolve(base, spec["srt"])
             tmp_srt = os.path.join(work, "subs.srt")
             shutil.copy(srt, tmp_srt)
-            # Mac・Windows はこれまでどおり。Linux（Noto）のときだけ、入っているフォントの名前にする
-            fname = "Noto Sans CJK JP" if "NotoSansCJK" in os.path.basename(font) else "Hiragino Sans"
+            # 入っているフォントの名前で字幕を焼く（Mac: ヒラギノ / Windows: 游ゴシック・メイリオ / Linux: Noto）
+            fname = {"yugothb.ttc": "Yu Gothic", "meiryob.ttc": "Meiryo", "meiryo.ttc": "Meiryo"}.get(
+                os.path.basename(font).lower(),
+                "Noto Sans CJK JP" if "NotoSansCJK" in os.path.basename(font) else "Hiragino Sans")
             style = "FontName=%s,FontSize=%d,Outline=2,MarginV=40" % (fname, 22 if W >= H else 14)
             nxt = os.path.join(work, "subbed.mp4")
             run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", cur,
