@@ -83,6 +83,12 @@ tatsumi-auto-kit/
 | whisper | 任意（文字起こし） | `whisper --help` | `pip3 install -U openai-whisper` |
 | Gemini の API キー | 任意（声を良くしたいとき） | kit-setup が「入っている／いない」だけ表示 | https://aistudio.google.com/ |
 
+Linux（Ubuntu など）で使うときは、ffmpeg・日本語フォント（Noto Sans CJK）・読み上げ（Open JTalk）をまとめて入れます。
+
+```
+sudo apt-get install ffmpeg fonts-noto-cjk open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001
+```
+
 ---
 
 ## 4 セットアップ 10ステップ

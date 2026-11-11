@@ -94,7 +94,8 @@ def find_font(arg):
     for f in FONT_CANDIDATES:
         if os.path.exists(f):
             return f
-    die("日本語フォントが見つかりません。edit.json の font にフォントファイルを指定してください")
+    die("日本語フォントが見つかりません。edit.json の font にフォントファイルを指定してください"
+        "（Linux は sudo apt-get install fonts-noto-cjk で入ります）")
 
 
 def resolve(base, p):
@@ -246,7 +247,9 @@ def render(spec_path):
             srt = resolve(base, spec["srt"])
             tmp_srt = os.path.join(work, "subs.srt")
             shutil.copy(srt, tmp_srt)
-            style = "FontName=Hiragino Sans,FontSize=%d,Outline=2,MarginV=40" % (22 if W >= H else 14)
+            # Mac・Windows はこれまでどおり。Linux（Noto）のときだけ、入っているフォントの名前にする
+            fname = "Noto Sans CJK JP" if "NotoSansCJK" in os.path.basename(font) else "Hiragino Sans"
+            style = "FontName=%s,FontSize=%d,Outline=2,MarginV=40" % (fname, 22 if W >= H else 14)
             nxt = os.path.join(work, "subbed.mp4")
             run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", cur,
                  "-vf", "subtitles=%s:force_style=%s" % (esc(tmp_srt), esc(style)),

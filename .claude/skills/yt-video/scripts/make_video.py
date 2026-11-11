@@ -69,6 +69,7 @@ def find_font(kind, override=None):
         if os.path.exists(p):
             return p
     print("NG   日本語のフォントが見つかりません。--font-bold / --font-regular でフォントファイルを指定してください")
+    print("     （Linux は sudo apt-get install fonts-noto-cjk で入ります）")
     sys.exit(2)
 
 
@@ -87,9 +88,11 @@ def wrap(draw, text, fnt, max_w, max_lines=None):
 
 def draw_center(draw, lines, fnt, y, fill, line_gap=1.3):
     size = fnt.size
+    # Noto Sans CJK（Linux）は字の上の余白が広く、そのままだと下の線に重なるので、その分だけ上げる
+    dy = -int(size * 0.24) if "NotoSansCJK" in os.path.basename(str(getattr(fnt, "path", ""))) else 0
     for ln in lines:
         w = draw.textlength(ln, font=fnt)
-        draw.text(((W - w) / 2, y), ln, font=fnt, fill=fill)
+        draw.text(((W - w) / 2, y + dy), ln, font=fnt, fill=fill)
         y += int(size * line_gap)
     return y
 

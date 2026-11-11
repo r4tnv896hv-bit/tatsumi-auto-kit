@@ -44,13 +44,8 @@ BADGE = {"hook": "", "point1": "POINT 1", "point2": "POINT 2", "point3": "POINT 
 
 # ---------------------------------------------------------------- 読み上げ
 def tts_say(text, wav, voice, rate):
-    aiff = wav + ".aiff"
-    cmd = ["say", "-v", voice, "-o", aiff]
-    if rate:
-        cmd += ["-r", str(rate)]
-    subprocess.run(cmd + [text], check=True)
-    vu.run(["-i", aiff, "-ac", "1", "-ar", "48000", "-c:a", "pcm_s16le", wav])
-    os.remove(aiff)
+    """内蔵の声で読む。Mac は say、Linux は Open JTalk（どちらも無料・回数制限なし）。"""
+    vu.local_tts(text, wav, voice, rate, 48000)
 
 
 def tts_gemini(text, wav, voice):
@@ -148,8 +143,8 @@ def main():
     ap.add_argument("scripts")
     ap.add_argument("--index", type=int, default=1, help="何本目を作るか（1〜3）")
     ap.add_argument("--tts", default="auto", choices=["auto", "say", "gemini"])
-    ap.add_argument("--voice", default=None, help="say なら Kyoko、Gemini なら Puck など")
-    ap.add_argument("--rate", type=int, default=0, help="say の話す速さ（初期値のままが自然）")
+    ap.add_argument("--voice", default=None, help="say なら Kyoko、Gemini なら Puck など（Linux の内蔵の声では使わない）")
+    ap.add_argument("--rate", type=int, default=0, help="内蔵の声の速さ（初期値のままが自然。Mac: 1分の語数 / Linux: 百分率で 100 が標準）")
     ap.add_argument("--outdir", default=None)
     a = ap.parse_args()
 
@@ -181,7 +176,7 @@ def main():
             engine = "say"
     if engine == "say":
         for i, sc in enumerate(scenes):
-            tts_say(sc["narration"], wavs[i], a.voice or "Kyoko", a.rate)
+            tts_say(sc["narration"], wavs[i], a.voice, a.rate)
 
     parts, planned = [], 0.0
     for i, sc in enumerate(scenes):

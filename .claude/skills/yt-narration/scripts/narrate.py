@@ -7,7 +7,8 @@
     python3 narrate.py script.json --out narration --engine gemini               # 声を良くしたいとき（任意）
 
 声の種類（--engine）:
-    os     … 標準。macOS は say（Kyoko）、Windows は標準の音声合成（Haruka など）。
+    os     … 標準。macOS は say（Kyoko）、Windows は標準の音声合成（Haruka など）、
+             Linux は Open JTalk（sudo apt-get install open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001）。
              回数制限が無いので、長い動画でも一度で最後まで作れる
     gemini … 声を良くしたいときに使う（任意）。GEMINI_API_KEY が必要。
              無料枠は1日の回数が少ないので、長い動画は1日で作り切れないことがある。
@@ -206,6 +207,22 @@ class Gemini:
 
 # ---------------- パソコン内蔵の声 ----------------
 
+_OJ_DICS = ("/var/lib/mecab/dic/open-jtalk/naist-jdic", "/usr/share/open-jtalk/dic",
+            "/usr/local/share/open_jtalk/dic", "/usr/share/open_jtalk/dic")
+_OJ_VOICES = ("/usr/share/hts-voice/mei/mei_normal.htsvoice",
+              "/usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.htsvoice",
+              "/usr/share/open-jtalk/voices/nitech_jp_atr503_m001.htsvoice")
+
+
+def find_open_jtalk(voice=None):
+    """Linux の読み上げ Open JTalk の（コマンド, 辞書, 声）。そろっていなければ None。"""
+    exe = shutil.which("open_jtalk")
+    dic = next((d for d in (os.environ.get("OPEN_JTALK_DIC", ""),) + _OJ_DICS if d and os.path.isdir(d)), None)
+    hts = next((v for v in (voice or "", os.environ.get("OPEN_JTALK_VOICE", "")) + _OJ_VOICES
+                if v and os.path.isfile(v)), None)
+    return (exe, dic, hts) if exe and dic and hts else None
+
+
 class OSVoice:
     def __init__(self, voice=None, rate=None):
         self.sys = platform.system()
@@ -220,7 +237,13 @@ class OSVoice:
                 if not self.voice:
                     log("注意 日本語の声が見つかりません。システム設定 > アクセシビリティ > 読み上げコンテンツ で日本語の声を追加してください")
         elif self.sys != "Windows":
-            raise RuntimeError("この OS の内蔵の声には対応していません（Gemini を使ってください）")
+            # Linux など: Open JTalk（無料・回数制限なし）。--os-voice には .htsvoice の絶対パスを渡せる
+            self.oj = find_open_jtalk(self.voice)
+            if not self.oj:
+                raise RuntimeError(
+                    "内蔵の声（Open JTalk）が見つかりません。次で入ります: sudo apt-get install open-jtalk "
+                    "open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001（または Gemini を使ってください）")
+            self.voice = "open_jtalk:" + os.path.splitext(os.path.basename(self.oj[2]))[0]
         self.name = f"os:{self.sys}:{self.voice or 'default'}"
 
     def synth(self, text, dst):
@@ -237,6 +260,15 @@ class OSVoice:
                     cmd[1:1] = ["-r", str(self.rate)]
                 subprocess.run(cmd, check=True)
                 to_wav(aiff, dst)
+            elif self.sys != "Windows":
+                out = os.path.join(td, "out.wav")
+                cmd = [self.oj[0], "-x", self.oj[1], "-m", self.oj[2], "-ow", out]
+                if self.rate:
+                    cmd += ["-r", "%.2f" % (float(self.rate) / 100.0)]
+                line = " ".join(text.split()) + "\n"  # Open JTalk は1行ずつ読むので、改行をまとめる
+                subprocess.run(cmd, input=line.encode("utf-8"), check=True,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                to_wav(out, dst)
             else:
                 out = os.path.join(td, "out.wav")
                 ps = (
@@ -305,9 +337,9 @@ def main():
     ap.add_argument("--engine", choices=["os", "gemini"], default="os",
                     help="os（標準・内蔵の声）/ gemini（任意・声を良くしたいとき）")
     ap.add_argument("--voice", default=None, help="Gemini の声（初期値 Kore）。--engine gemini のときだけ使う")
-    ap.add_argument("--os-voice", default=None, help="内蔵の声の名前（Mac 例: Kyoko。省略時は日本語の声を自動で選ぶ）")
+    ap.add_argument("--os-voice", default=None, help="内蔵の声の名前（Mac 例: Kyoko。Linux は .htsvoice の絶対パス。省略時は日本語の声を自動で選ぶ）")
     ap.add_argument("--strict", action="store_true", help="--engine gemini が失敗したら、内蔵の声に切り替えず止める")
-    ap.add_argument("--rate", type=int, default=None, help="OS の声の速さ（Mac: 1分の語数 例 180 / Windows: -10〜10）")
+    ap.add_argument("--rate", type=int, default=None, help="OS の声の速さ（Mac: 1分の語数 例 180 / Windows: -10〜10 / Linux: 百分率で 100 が標準）")
     ap.add_argument("--gap", type=float, default=0.5, help="シーンの間の無音（秒）")
     ap.add_argument("--tail", type=float, default=0.8, help="最後に足す無音（秒）")
     ap.add_argument("--mp3", action="store_true", help="narration.mp3 も作る")

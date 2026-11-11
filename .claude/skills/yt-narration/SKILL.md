@@ -53,9 +53,10 @@ python3 <このスキルのフォルダ>/scripts/narrate.py <作業フォルダ>
 ```
 
 - パスは全部**絶対パス**で書く。
-- 何もつけない … **標準。パソコン内蔵の声**（Mac: Kyoko / Windows: Haruka など）。回数制限なし。
+- 何もつけない … **標準。パソコン内蔵の声**（Mac: Kyoko / Windows: Haruka など / Linux: Open JTalk）。回数制限なし。
+  Linux は先に `sudo apt-get install open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001`
 - `--os-voice Kyoko` … 内蔵の声の名前を指定（省略時は日本語の声を自動で選ぶ）
-- `--rate 180` … 内蔵の声の速さ（Mac: 1分の語数 / Windows: -10〜10）
+- `--rate 180` … 内蔵の声の速さ（Mac: 1分の語数 / Windows: -10〜10 / Linux: 百分率で 100 が標準）
 - `--only s03,s05` … そのシーンだけ作り直す（台本を一部直したとき）
 - `--gap 0.5` … シーンの間の無音（秒）
 

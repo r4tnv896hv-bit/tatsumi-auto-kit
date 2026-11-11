@@ -63,6 +63,8 @@ Python        https://www.python.org/downloads/
 ffmpeg        https://ffmpeg.org/download.html
               Mac: Homebrew（https://brew.sh/）を入れてから  brew install ffmpeg
               Windows: winget install Gyan.FFmpeg
+              Linux: sudo apt-get install ffmpeg fonts-noto-cjk open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001
+              （Linux は ffmpeg・日本語フォント・読み上げをまとめて入れる）
 Pillow        pip3 install pillow（Windows は pip install pillow）
 Chrome        https://www.google.com/chrome/
 Edge          https://www.microsoft.com/edge

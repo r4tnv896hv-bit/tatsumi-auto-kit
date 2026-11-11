@@ -117,7 +117,11 @@ def shot_browser(browser, html_path, png_path):
         cmd = [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
                "--no-default-browser-check", f"--user-data-dir={prof}", "--force-device-scale-factor=1",
                f"--window-size={W},{H}", f"--screenshot={png_path}", "--virtual-time-budget=1500", url]
-        subprocess.run(cmd, capture_output=True, timeout=90)
+        try:
+            subprocess.run(cmd, capture_output=True, timeout=90)
+        except (subprocess.TimeoutExpired, OSError):
+            # ブラウザが固まった・起動できなかったときは、次の方法（playwright）に任せる
+            return False
     return os.path.exists(png_path)
 
 
@@ -133,6 +137,7 @@ def shot_playwright(html_path, png_path):
         pg.wait_for_timeout(500)
         pg.screenshot(path=png_path)
         b.close()
+    return os.path.exists(png_path)
     return os.path.exists(png_path)
 
 
@@ -197,7 +202,10 @@ def main():
             f.write(page)
         if os.path.exists(pp):
             os.remove(pp)
-        done = (browser and shot_browser(browser, hp, pp)) or shot_playwright(hp, pp)
+        done = bool(browser) and shot_browser(browser, hp, pp)
+        if not done:
+            browser = None  # 写せなかったブラウザは、次の案でもう待たない
+            done = shot_playwright(hp, pp)
         if not done:
             print("NG   PNG にできませんでした。Google Chrome か Microsoft Edge を入れるか、")
             print("     pip install playwright && python -m playwright install chromium を実行してください")

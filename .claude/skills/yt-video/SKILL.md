@@ -33,7 +33,8 @@ B 素材を編集する  自分で撮った mp4 がある        → 「モー�
 ```
 1 ffmpeg   ffmpeg -version（無ければ Mac: brew install ffmpeg / Windows: winget install Gyan.FFmpeg）
 2 Pillow   python3 -c "import PIL"（エラーなら pip3 install pillow。Windows は pip install pillow）
-3 日本語フォント  Mac はヒラギノ、Windows は游ゴシック/メイリオを自動で使う
+3 日本語フォント  Mac はヒラギノ、Windows は游ゴシック/メイリオ、Linux は Noto Sans CJK を自動で使う
+              （Linux で無ければ sudo apt-get install fonts-noto-cjk）
               見つからないときは --font-bold / --font-regular でフォントファイルを指定
 ```
 

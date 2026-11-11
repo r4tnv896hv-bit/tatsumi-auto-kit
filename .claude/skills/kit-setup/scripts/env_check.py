@@ -103,7 +103,9 @@ def check():
         ffmpeg_version(ff) if ff else "見つかりません",
         ("Mac: Homebrew（%s）を入れてから  brew install ffmpeg\n" % LINKS["homebrew"]
          if mac else
-         "Windows: PowerShell で  winget install Gyan.FFmpeg  （入れたらターミナルを開き直す）\n")
+         "Windows: PowerShell で  winget install Gyan.FFmpeg  （入れたらターミナルを開き直す）\n"
+         if win else
+         "Linux: sudo apt-get install ffmpeg\n")
         + "公式の案内: %s" % LINKS["ffmpeg"])
 
     add("pillow", "Pillow（画像を作る Python の部品）", has_module("PIL"), True,
@@ -128,6 +130,24 @@ def check():
     elif win:
         add("voice", "内蔵の読み上げ（Windows の音声）", True, False,
             "Windows 標準の音声を使います（日本語の声が無い場合は 設定 > 時刻と言語 > 音声 で追加）", "")
+    else:
+        oj = shutil.which("open_jtalk")
+        dic = any(os.path.isdir(d) for d in (
+            os.environ.get("OPEN_JTALK_DIC", "") or "/nonexistent", "/var/lib/mecab/dic/open-jtalk/naist-jdic",
+            "/usr/share/open-jtalk/dic", "/usr/local/share/open_jtalk/dic", "/usr/share/open_jtalk/dic"))
+        hts = any(os.path.isfile(v) for v in (
+            os.environ.get("OPEN_JTALK_VOICE", "") or "/nonexistent", "/usr/share/hts-voice/mei/mei_normal.htsvoice",
+            "/usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.htsvoice",
+            "/usr/share/open-jtalk/voices/nitech_jp_atr503_m001.htsvoice"))
+        ok = bool(oj and dic and hts)
+        add("voice", "内蔵の読み上げ（Linux の Open JTalk）", ok, False,
+            oj if ok else "見つかりません（コマンド・辞書・声の3つが要ります）",
+            "sudo apt-get install open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001")
+        noto = [os.path.join(d, "NotoSansCJK-Bold.ttc") for d in (
+            "/usr/share/fonts/opentype/noto", "/usr/share/fonts/noto-cjk", "/usr/share/fonts/google-noto-cjk")]
+        nf = next((p for p in noto if os.path.exists(p)), None)
+        add("font", "日本語フォント（Linux の Noto Sans CJK。動画の文字・字幕）", nf, False,
+            nf or "見つかりません", "sudo apt-get install fonts-noto-cjk")
 
     key_set = bool(os.environ.get("GEMINI_API_KEY"))
     add("gemini", "（任意）GEMINI_API_KEY（声を良くしたいときだけ）", key_set, False,
