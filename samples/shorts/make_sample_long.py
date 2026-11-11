@@ -64,9 +64,7 @@ SLIDES = [
 
 
 def tts(text, out_wav, tmp):
-    aiff = os.path.join(tmp, "s.aiff")
-    subprocess.run(["say", "-v", VOICE, "-o", aiff, text], check=True)
-    vu.run(["-i", aiff, "-ac", "1", "-ar", str(SR), "-c:a", "pcm_s16le", out_wav])
+    vu.local_tts(text, out_wav, VOICE if vu.local_tts_name() == "say" else None, None, SR)
     with wave.open(out_wav) as w:
         return w.readframes(w.getnframes())
 

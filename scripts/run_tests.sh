@@ -4,7 +4,8 @@
 #
 # 使い方:
 #   bash scripts/run_tests.sh          … 速い点検（約30秒。動画・音声は作らない）
-#   bash scripts/run_tests.sh --full   … 動画・音声・サムネまで実際に作る（Mac のみ。数分かかる）
+#   bash scripts/run_tests.sh --full   … 動画・音声・サムネまで実際に作る（Mac か Linux。数分かかる）
+#       Linux は先に: sudo apt-get install ffmpeg fonts-noto-cjk open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001
 #   bash scripts/run_tests.sh --full --keep   … 作ったものを消さずに残す（場所を最後に表示）
 #
 # 終了コード: 0 = 全部合格 / 1 = 不合格あり

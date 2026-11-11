@@ -202,7 +202,10 @@ def main():
             f.write(page)
         if os.path.exists(pp):
             os.remove(pp)
-        done = (browser and shot_browser(browser, hp, pp)) or shot_playwright(hp, pp)
+        done = bool(browser) and shot_browser(browser, hp, pp)
+        if not done:
+            browser = None  # 写せなかったブラウザは、次の案でもう待たない
+            done = shot_playwright(hp, pp)
         if not done:
             print("NG   PNG にできませんでした。Google Chrome か Microsoft Edge を入れるか、")
             print("     pip install playwright && python -m playwright install chromium を実行してください")
