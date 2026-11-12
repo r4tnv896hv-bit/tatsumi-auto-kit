@@ -114,7 +114,7 @@ def main():
         w.setframerate(SR)
         w.writeframes(pcm)
     lst = os.path.join(tmp, "list.txt")
-    with open(lst, "w") as f:
+    with open(lst, "w", encoding="utf-8") as f:
         f.writelines("file '%s'\n" % s for s in seg_files)
     out = os.path.join(out_dir, "yurukakei_long_sample.mp4")
     vu.run(["-f", "concat", "-safe", "0", "-i", lst, "-i", wav, "-map", "0:v", "-map", "1:a",

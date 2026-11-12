@@ -41,6 +41,8 @@
 
 | 直したこと | 内容 |
 |---|---|
+| Windows のショート対応（2026-11-11） | short-clip・short-from-article・見本の長尺動画が、Windows のフォント（游ゴシック・メイリオ）と標準の音声合成を使うようにした。フォント用のリンクを作れないときはコピーする。ffmpeg の出力は UTF-8 で読む。**Windows の実機では未確認**（Linux の上で、代役のフォント置き場と代役の音声コマンドを使って分岐だけ確認） |
+| 文字化け（Windows の Claude Code） | `.claude/settings.json` に `PYTHONIOENCODING=utf-8` を追加。スクリプトの日本語の表示が記号に化けるのを防ぐ（Windows の実機では未確認） |
 | Linux 対応（2026-11-11） | 内蔵の声に Open JTalk、フォントに Noto Sans CJK を追加（yt-narration・yt-video・short-clip・short-from-article・見本の長尺動画・env_check.py）。Ubuntu 24.04・Python 3.13.18・ffmpeg 6.1.1 で `bash scripts/run_tests.sh --full` が PASS 49 / FAIL 0（終了コード 0、2026-11-11 12:30 UTC）。サムネは、その環境の Chrome がコマンドラインの撮影で固まったため、playwright への切り替えで作成 |
 | render_thumbnail.py | ブラウザが固まるとエラー表示で止まっていた。playwright に切り替えるように修正。切り替えが成功しても失敗と判定していた誤りも修正 |
 | weekly_report.py | Python 3.12 以降で出る SyntaxWarning を解消 |

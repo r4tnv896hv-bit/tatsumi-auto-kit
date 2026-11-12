@@ -22,7 +22,8 @@ def find_ffmpeg():
     for c in cands:
         if c and os.path.isfile(c) and os.access(c, os.X_OK):
             return c
-    sys.exit("ffmpeg が見つかりません。README の「準備」を見て入れてください（brew install ffmpeg など）。")
+    sys.exit("ffmpeg が見つかりません。README の「準備」を見て入れてください"
+             "（Mac: brew install ffmpeg / Windows: winget install Gyan.FFmpeg / Linux: sudo apt-get install ffmpeg）。")
 
 
 FFMPEG = find_ffmpeg()
@@ -31,7 +32,7 @@ FFMPEG = find_ffmpeg()
 def run(args, cwd=None):
     """ffmpeg を実行。失敗したらエラー全文を出して止まる（要約しない）。"""
     p = subprocess.run([FFMPEG, "-hide_banner", "-y"] + args, cwd=cwd,
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
     if p.returncode != 0:
         sys.stderr.write(p.stderr)
         raise SystemExit("ffmpeg が失敗しました（上がエラー全文です）。終了コード %d" % p.returncode)
@@ -58,7 +59,7 @@ def stream_duration(path, kind):
     「音声は終わったのに映像だけ止まった絵が何分も続く」事故を見つけるため。"""
     p = subprocess.run([FFMPEG, "-hide_banner", "-v", "error", "-i", path, "-map", "0:%s:0" % kind,
                         "-f", "null", "-", "-progress", "pipe:1", "-nostats"],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
     vals = re.findall(r"out_time_us=(\d+)", p.stdout)
     return int(vals[-1]) / 1e6 if vals else 0.0
 
@@ -106,7 +107,7 @@ def concat_and_strip(parts, out, workdir):
     lst = os.path.join(workdir, "_list.txt")
     with open(lst, "w", encoding="utf-8") as f:
         for p in parts:
-            f.write("file '%s'\n" % os.path.abspath(p).replace("'", "'\\''"))
+            f.write("file '%s'\n" % os.path.abspath(p).replace("\\", "/").replace("'", "'\\''"))
     run(["-f", "concat", "-safe", "0", "-i", lst, "-map", "0:v:0", "-map", "0:a:0", "-c", "copy",
          "-map_metadata:s:v", "-1", "-map_metadata:s:a", "-1",
          "-bsf:v", "filter_units=remove_types=6",          # x264 の署名(SEI)を消す
@@ -131,12 +132,18 @@ _NOTO_DIRS = ("/usr/share/fonts/opentype/noto", "/usr/share/fonts/noto-cjk", "/u
 
 
 def jp_font(weight="W6"):
-    # Mac（ヒラギノ）→ Linux（Noto Sans CJK。細い字は Regular、それ以外は Bold）の順に探す
-    noto = ("Regular", "Bold") if weight in ("W0", "W1", "W2", "W3") else ("Bold", "Regular")
+    # Mac（ヒラギノ）→ Windows（游ゴシック・メイリオ）→ Linux（Noto Sans CJK）の順に探す。
+    # 細い字（W3 まで）は Regular、それ以外は Bold
+    thin = weight in ("W0", "W1", "W2", "W3")
+    noto = ("Regular", "Bold") if thin else ("Bold", "Regular")
+    win = ("YuGothM.ttc", "meiryo.ttc", "YuGothB.ttc", "meiryob.ttc", "msgothic.ttc") if thin else \
+          ("YuGothB.ttc", "meiryob.ttc", "YuGothM.ttc", "meiryo.ttc", "msgothic.ttc")
+    windir = os.path.join(os.environ.get("WINDIR", "C:/Windows"), "Fonts")
     cands = ["/System/Library/Fonts/ヒラギノ角ゴシック %s.ttc" % weight,
              "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
              "/System/Library/Fonts/Hiragino Sans GB.ttc",
              "/Library/Fonts/Arial Unicode.ttf"]
+    cands += [os.path.join(windir, n) for n in win]
     cands += [os.path.join(d, "NotoSansCJK-%s.ttc" % k) for k in noto for d in _NOTO_DIRS]
     for p in cands:
         if os.path.exists(p):
@@ -145,9 +152,15 @@ def jp_font(weight="W6"):
 
 
 def ass_font(weight="W7"):
-    """字幕（ASS）に書くフォントの名前と太字の印。Mac はヒラギノ、Linux は Noto Sans CJK JP の太字。"""
-    if "NotoSansCJK" in os.path.basename(jp_font(weight)):
+    """字幕（ASS）に書くフォントの名前と太字の印。Mac はヒラギノ、Windows は游ゴシック/メイリオ、Linux は Noto。"""
+    base = os.path.basename(jp_font(weight))
+    if "NotoSansCJK" in base:
         return "Noto Sans CJK JP", -1
+    win = {"YuGothB.ttc": ("Yu Gothic", -1), "YuGothM.ttc": ("Yu Gothic Medium", 0),
+           "meiryob.ttc": ("Meiryo", -1), "meiryo.ttc": ("Meiryo", 0), "msgothic.ttc": ("MS Gothic", 0)}
+    for name, val in win.items():
+        if base.lower() == name.lower():
+            return val
     return "Hiragino Sans", 0
 
 
@@ -171,15 +184,17 @@ def find_open_jtalk():
 
 
 def local_tts_name():
-    """このパソコンで使う内蔵の読み上げの名前（say / open_jtalk）。無ければ None。"""
+    """このパソコンで使う内蔵の読み上げの名前（say / windows / open_jtalk）。無ければ None。"""
     if shutil.which("say"):
         return "say"
+    if os.name == "nt":
+        return "windows"
     return "open_jtalk" if find_open_jtalk() else None
 
 
 def local_tts(text, wav, voice=None, rate=None, sr=48000):
-    """内蔵の声で text を読み、モノラルの wav にする。Mac は say、Linux は Open JTalk。
-    rate: Mac は1分の語数（例 180）。Linux は百分率（100 が標準の速さ）。"""
+    """内蔵の声で text を読み、モノラルの wav にする。Mac は say、Windows は標準の音声合成、Linux は Open JTalk。
+    rate: Mac は1分の語数（例 180）。Windows は -10〜10。Linux は百分率（100 が標準の速さ）。"""
     tmp = wav + ".tmp"
     if shutil.which("say"):
         tmp += ".aiff"
@@ -187,6 +202,25 @@ def local_tts(text, wav, voice=None, rate=None, sr=48000):
         if rate:
             cmd += ["-r", str(rate)]
         subprocess.run(cmd + [text], check=True)
+    elif os.name == "nt":
+        # Windows 標準の音声合成（日本語の声 Haruka など）。文章はファイルで渡す（記号や改行で壊れないように）
+        tmp += ".wav"
+        txt = wav + ".tmp.txt"
+        with open(txt, "w", encoding="utf-8") as f:
+            f.write(text)
+        q = lambda p: p.replace("'", "''")  # noqa: E731  PowerShell の '…' の中の ' を重ねる
+        ps = ("Add-Type -AssemblyName System.Speech;"
+              "$s=New-Object System.Speech.Synthesis.SpeechSynthesizer;"
+              "$v=$s.GetInstalledVoices()|Where-Object{$_.VoiceInfo.Culture.Name -eq 'ja-JP'}|Select-Object -First 1;"
+              "if($v){$s.SelectVoice($v.VoiceInfo.Name)};"
+              + ("$s.Rate=%d;" % max(-10, min(10, int(rate))) if rate else "")
+              + "$s.SetOutputToWaveFile('%s');" % q(tmp)
+              + "$s.Speak([IO.File]::ReadAllText('%s',[Text.Encoding]::UTF8));$s.Dispose()" % q(txt))
+        try:
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True)
+        finally:
+            if os.path.exists(txt):
+                os.remove(txt)
     else:
         oj = find_open_jtalk()
         if not oj:
@@ -208,7 +242,10 @@ def make_fontsdir(workdir, weight="W7"):
     src = jp_font(weight)
     dst = os.path.join(d, "jp" + os.path.splitext(src)[1])
     if not os.path.exists(dst):
-        os.symlink(src, dst)
+        try:
+            os.symlink(src, dst)
+        except (OSError, NotImplementedError, AttributeError):
+            shutil.copy(src, dst)  # Windows は権限が無いとリンクを作れないので、コピーする
     return d
 
 
